@@ -7,6 +7,11 @@ import requests
 from lxml.html import tostring
 import pyperclip
 # chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\\selenium\\ChromeProfile"
+
+def writeErrorData(url):
+    with open('error.txt', 'a', encoding='utf-8-sig') as f:
+        f.write(url + '\n')
+        return
 def re_return_str(listdata):
     if listdata:
         return listdata[0].replace('\n', ' ').replace('\t', '').replace(' ','').replace('\r','')
@@ -60,10 +65,11 @@ def newxpath_list():
     str_1 = '''
 
 
-https://www.elisabettafranchi.com/us/white.html
-https://www.elisabettafranchi.com/us/velvet-touch.html
-https://www.elisabettafranchi.com/us/essentials.html
-https://www.elisabettafranchi.com/us/gift-card-giftcard.html
+/collections/road-gravel-bikes
+/collections/mountain-bikes
+/collections/kids-bikes
+/collections/hybrid-bikes
+/collections/urban-bikes
 
     '''
     list_1 = [item.rstrip().lstrip().capitalize() for item in str_1.split('\n') if item != '']
@@ -74,12 +80,13 @@ https://www.elisabettafranchi.com/us/gift-card-giftcard.html
 def xpathtolist():
     Base = ''
     # Base =  "-".join([item.capitalize() for item in "Products,Products-Board Games".split(',')])
-    url = "https://www.maerklinshop.de"
+    url = "https://www.decathlon.com"
     str_1 = """
-https://www.merrell.com/US/en/outlet/
-https://www.merrell.com/US/en/kids-sale/
-https://www.merrell.com/US/en/very-merry-merrell-days/
-https://www.merrell.com/US/en/holiday-sale/
+/collections/surf-bodyboard
+/collections/wetsuits-booties-hood
+/collections/surf-accessories-spare-parts
+/collections/beach-towels-ponchos
+/collections/rashguards-uv-protection
 """
 
     str_1 = str_1.replace('\n', ',').replace('    ', '').rstrip().lstrip().replace(',,', ',').replace(',,', ',')
@@ -112,6 +119,12 @@ def xpathgetHtml(data, res):
     return text
 def getTagetitle(oncetitle,secondetitle,theardlist):
     oncetitle = oncetitle.replace('/','-').replace('  ',' ')
+    if not theardlist:
+        listdata = []
+        for item in secondetitle:
+            listdata.append(f"{oncetitle},{oncetitle}-{item}")
+        print(listdata)
+        return
     list_data = []
     if secondetitle:
         secondetitle = secondetitle.replace('/',' ').replace('-',' ').replace('_',' ').replace('  ',' ').replace('  ',' ')
@@ -128,7 +141,7 @@ def delstr_json(data):
     if '.json' in data:
         return data.replace('.json','')
 def resolve(filename):
-    filename = delstr_json(filename)
+
     with open(f'{filename}.json', 'r', encoding='utf-8-sig') as f:
         jsdata = json.loads(f.read())
 
@@ -362,85 +375,16 @@ def request(url, headers=None, params=None, cookies=None, proxies=None, timeout=
             time.sleep(2)
 
 
-def baseInfoNew(url, Body, Collection, Title, option_1Name, option_1Value, option2_title, option2_value_title, optionbaseimg, option_1imgList, VariantCompareAtPrice,
-                VariantPrice,
-                option3_title='', option3_value_title=[]):
-
-    hanlder = url.split('/')[-1].replace(' ', '-').replace('.html', '')  # 商品所属组 相同hanlder 视为同一个商品
-    if not VariantCompareAtPrice and VariantPrice:
-        VariantCompareAtPrice = VariantPrice
-    Collection = Collection.replace('_', ' ')
-    Collection = ",".join([item.capitalize() for item in Collection.split(',')])
-    list_sex = ['Man', 'Boy', 'Baby', 'Woman']
-    Collection_list = Collection.split(',')
-    for sex in list_sex:
-        if sex in Collection_list[0]:
-            data_list = []
-            data_list.append(Collection_list[0])
-            for item in Collection_list[1:]:
-                if sex not in item:
-                    data_list.append(sex + ' ' + item)
-            Collection = ",".join(data_list)
-    if Collection:
-        if Collection[1] == ",":
-            Collection = Collection[1:]
-    info_list = getinfolist(option_1Name, option_1Value, option2_title, option2_value_title, option3_title,
-                            option3_value_title, optionbaseimg)
-
-    # 商品售价  商品原价
-    Variant_Requires_Shipping = "TRUE"
-    Variant_Taxable = "FALSE"
-    Variant_Barcode = ""
-    foodprice_list = [VariantPrice, VariantCompareAtPrice, Variant_Requires_Shipping, Variant_Taxable, Variant_Barcode]
-
-    # 商品默认字段
-    VariantWeightUnit = 'kg'
-    VariantTaxCode = ''
-    Costperitem = ''
-    defult_list_1 = [VariantWeightUnit, VariantTaxCode, Costperitem, url]
-    img_infolist = return_img_infolist(option_1imgList, info_list, foodprice_list, defult_list_1)
-    # print(img_infolist)
-    Image_Alt_Text = ''
-    Gift_Card = 'FALSE'
-    Published = "TRUE"
-    Vendor = ''
-    Collection = Collection.replace('_', ' ')
-    Type = Collection.split(',')[0]
-    Tags = Collection
-    finlysavedata = []
-    for item in img_infolist:
-        if img_infolist.index(item) == 0:
-            itemlist = [hanlder.lstrip().rstrip(), Title.lstrip().rstrip(), Body.lstrip().rstrip(), Vendor,
-                        Collection.lstrip().rstrip(), Type.lstrip().rstrip(), Tags.lstrip().rstrip(), Published]
-        else:
-            itemlist = [hanlder, '', '', '', '', '', '', '']
-        itemlist += item[11:-7] + item[:6] + item[6:11] + [item[-5], str(item[-6]), Image_Alt_Text] + [
-            Gift_Card] + verdata_2() + [item[-7]] + item[-4:]
-        finlysavedata.append(itemlist)
-    return finlysavedata
-
-
 def baseInfo(filename, url, Body, Collection, Title, option_1Name, option_1Value, option2_title,
              option2_value_title, optionbaseimg, option_1imgList,
              VariantCompareAtPrice, VariantPrice, option3_title='', option3_value_title=[]):
     hanlder = url.split('/')[-1].replace(' ', '-').replace('.html', '')  # 商品所属组 相同hanlder 视为同一个商品
     if not VariantCompareAtPrice and VariantPrice:
         VariantCompareAtPrice = VariantPrice
-    hanlder = hanlder.replace('.html', '')
     Collection = Collection.replace('_', ' ')
     Collection = ",".join([item.capitalize() for item in Collection.split(',')])
-    # list_sex = ['Man', 'Boy', 'Baby', 'Woman']
-    # Collection_list = Collection.split(',')
-    # for sex in list_sex:
-    #     if sex in Collection_list[0]:
-    #         data_list = []
-    #         data_list.append(Collection_list[0])
-    #         for item in Collection_list[1:]:
-    #             if sex not in item:
-    #                 data_list.append(sex + ' ' + item)
-    #         Collection = ",".join(data_list)
     if Collection:
-        if Collection[1] == ",":
+        if Collection[0] == ",":
             Collection = Collection[1:]
     info_list = getinfolist(option_1Name, option_1Value, option2_title, option2_value_title, option3_title,
                             option3_value_title, optionbaseimg)
@@ -462,7 +406,6 @@ def baseInfo(filename, url, Body, Collection, Title, option_1Name, option_1Value
     Gift_Card = 'FALSE'
     Published = "TRUE"
     Vendor = ''
-    Collection = Collection.replace('_', ' ')
     Type = Collection.split(',')[0]
     Tags = Collection
     finlysavedata = []
@@ -474,71 +417,12 @@ def baseInfo(filename, url, Body, Collection, Title, option_1Name, option_1Value
             itemlist = [hanlder, '', '', '', '', '', '', '']
         itemlist += item[11:-7] + item[:6] + item[6:11] + [item[-5], str(item[-6]), Image_Alt_Text] + [
             Gift_Card] + verdata_2() + [item[-7]] + item[-4:]
+        itemlist[25] = itemlist[25].split('?')[0]
+        itemlist[-5] = itemlist[-5].split('?')[0]
         finlysavedata.append(itemlist)
     save_xlsx(filename, finlysavedata)
 
 
-def thread_baseInfo(url, Body, Collection, Title, option_1Name, option_1Value, option2_title,
-                    option2_value_title, optionbaseimg, option_1imgList,
-                    VariantCompareAtPrice, VariantPrice, option3_title='', option3_value_title=[]):
-    hanlder = url.split('/')[-1].replace(' ', '-').replace('.html', '')  # 商品所属组 相同hanlder 视为同一个商品
-    if not VariantCompareAtPrice and VariantPrice:
-        VariantCompareAtPrice = VariantPrice
-    hanlder = hanlder.replace('.html', '')
-    Collection = Collection.replace('_', ' ')
-    Collection = ",".join([item.capitalize() for item in Collection.split(',')])
-
-    list_sex = ['Man', 'Boy', 'Baby', 'Woman']
-    Collection_list = Collection.split(',')
-    for sex in list_sex:
-        if sex in Collection_list[0]:
-            data_list = []
-            data_list.append(Collection_list[0])
-            for item in Collection_list[1:]:
-                if sex not in item:
-                    data_list.append(sex + ' ' + item)
-                else:
-                    data_list.append(item)
-            Collection = ",".join(data_list)
-
-    if Collection:
-        if Collection[1] == ",":
-            Collection = Collection[1:]
-
-    info_list = getinfolist(option_1Name, option_1Value, option2_title, option2_value_title, option3_title,
-                            option3_value_title, optionbaseimg)
-
-    # 商品售价  商品原价
-    Variant_Requires_Shipping = "TRUE"
-    Variant_Taxable = "FALSE"
-    Variant_Barcode = ""
-    foodprice_list = [VariantPrice, VariantCompareAtPrice, Variant_Requires_Shipping, Variant_Taxable, Variant_Barcode]
-
-    # 商品默认字段
-    VariantWeightUnit = 'kg'
-    VariantTaxCode = ''
-    Costperitem = ''
-    defult_list_1 = [VariantWeightUnit, VariantTaxCode, Costperitem, url]
-    img_infolist = return_img_infolist(option_1imgList, info_list, foodprice_list, defult_list_1)
-    # print(img_infolist)
-    Image_Alt_Text = ''
-    Gift_Card = 'FALSE'
-    Published = "TRUE"
-    Vendor = ''
-    Collection = Collection.replace('_', ' ')
-    Type = Collection.split(',')[0]
-    Tags = Collection
-    finlysavedata = []
-    for item in img_infolist:
-        if img_infolist.index(item) == 0:
-            itemlist = [hanlder.lstrip().rstrip(), Title.lstrip().rstrip(), Body.lstrip().rstrip(), Vendor,
-                        Collection.lstrip().rstrip(), Type.lstrip().rstrip(), Tags.lstrip().rstrip(), Published]
-        else:
-            itemlist = [hanlder, '', '', '', '', '', '', '']
-        itemlist += item[11:-7] + item[:6] + item[6:11] + [item[-5], str(item[-6]), Image_Alt_Text] + [
-            Gift_Card] + verdata_2() + [item[-7]] + item[-4:]
-        finlysavedata.append(itemlist)
-    return finlysavedata
 
 
 if __name__ == '__main__':
@@ -557,7 +441,7 @@ if __name__ == '__main__':
     VariantPrice = ''   #售价 若没有售价价格为  原价*.3
 
 
-    baseInfo(filename, url, Body, Collection,  Title, option_1Name, option_1Value, option2_title, option2_value_title,optionbaseimg,option_1imgList,VariantCompareAtPrice,VariantPrice,option3_title, option3_value_title)
+    baseInfo(filename, url, Body, Collection,  Title, option_1Name, option_1Value, option2_title, option2_value_title,optionbaseimg,option_1imgList,VariantCompareAtPrice,VariantPrice,option3_title='', option3_value_title=[])
     '''
     xpathtolist()
     # newxpath_list()
